@@ -179,3 +179,48 @@ func TestOpenAICompatExecutorStreamSkipsKeepAliveUntilDataLine(t *testing.T) {
 		t.Fatalf("stream payload = %s", got.String())
 	}
 }
+
+func TestOpenAICompatExecutorModerationsPassthrough(t *testing.T) {
+	var gotPath string
+	var gotBody []byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		body, _ := io.ReadAll(r.Body)
+		gotBody = body
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"modr_1","model":"omni-moderation-latest","results":[{"flagged":false}]}`))
+	}))
+	defer server.Close()
+
+	executor := NewOpenAICompatExecutor("openai-compatibility", &config.Config{})
+	auth := &cliproxyauth.Auth{Attributes: map[string]string{
+		"base_url": server.URL + "/v1",
+		"api_key":  "test",
+	}}
+	resp, err := executor.Execute(context.Background(), auth, cliproxyexecutor.Request{
+		Model:   "omni-moderation-latest",
+		Payload: []byte(`{"input":"hello"}`),
+	}, cliproxyexecutor.Options{
+		SourceFormat: sdktranslator.FromString("openai"),
+		Alt:          "moderations",
+		Stream:       false,
+	})
+	if err != nil {
+		t.Fatalf("Execute error: %v", err)
+	}
+	if gotPath != "/v1/moderations" {
+		t.Fatalf("path = %q, want %q", gotPath, "/v1/moderations")
+	}
+	if !gjson.GetBytes(gotBody, "input").Exists() {
+		t.Fatalf("expected input in body")
+	}
+	if gjson.GetBytes(gotBody, "messages").Exists() {
+		t.Fatalf("unexpected messages in body")
+	}
+	if got := gjson.GetBytes(gotBody, "model").String(); got != "omni-moderation-latest" {
+		t.Fatalf("model = %q, want %q", got, "omni-moderation-latest")
+	}
+	if string(resp.Payload) != `{"id":"modr_1","model":"omni-moderation-latest","results":[{"flagged":false}]}` {
+		t.Fatalf("payload = %s", string(resp.Payload))
+	}
+}

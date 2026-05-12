@@ -66,4 +66,7 @@ func TestIsAIAPIPathIncludesImages(t *testing.T) {
 	if !isAIAPIPath("/v1/images/edits") {
 		t.Fatalf("expected /v1/images/edits to be treated as AI API path")
 	}
+	if !isAIAPIPath("/v1/moderations") {
+		t.Fatalf("expected /v1/moderations to be treated as AI API path")
+	}
 }
