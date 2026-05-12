@@ -6,7 +6,11 @@ import (
 	"strings"
 )
 
-const codexBuiltinImageModelID = "gpt-image-2"
+const (
+	codexBuiltinImageModelID       = "gpt-image-2"
+	codexBuiltinModerationModelID  = "omni-moderation-latest"
+	codexBuiltinLegacyModerationID = "text-moderation-latest"
+)
 
 // staticModelsJSON mirrors the top-level structure of models.json.
 type staticModelsJSON struct {
@@ -82,7 +86,12 @@ func GetAntigravityModels() []*ModelInfo {
 // not depend on remote models.json updates. Built-ins replace any matching IDs
 // already present in the provided slice.
 func WithCodexBuiltins(models []*ModelInfo) []*ModelInfo {
-	return upsertModelInfos(models, codexBuiltinImageModelInfo())
+	return upsertModelInfos(
+		models,
+		codexBuiltinImageModelInfo(),
+		codexBuiltinModerationModelInfo(),
+		codexBuiltinLegacyModerationModelInfo(),
+	)
 }
 
 func codexBuiltinImageModelInfo() *ModelInfo {
@@ -94,6 +103,30 @@ func codexBuiltinImageModelInfo() *ModelInfo {
 		Type:        "openai",
 		DisplayName: "GPT Image 2",
 		Version:     codexBuiltinImageModelID,
+	}
+}
+
+func codexBuiltinModerationModelInfo() *ModelInfo {
+	return &ModelInfo{
+		ID:          codexBuiltinModerationModelID,
+		Object:      "model",
+		Created:     1704067200, // 2024-01-01
+		OwnedBy:     "openai",
+		Type:        "openai",
+		DisplayName: "OMNI Moderation Latest",
+		Version:     codexBuiltinModerationModelID,
+	}
+}
+
+func codexBuiltinLegacyModerationModelInfo() *ModelInfo {
+	return &ModelInfo{
+		ID:          codexBuiltinLegacyModerationID,
+		Object:      "model",
+		Created:     1704067200, // 2024-01-01
+		OwnedBy:     "openai",
+		Type:        "openai",
+		DisplayName: "Text Moderation Latest",
+		Version:     codexBuiltinLegacyModerationID,
 	}
 }
 

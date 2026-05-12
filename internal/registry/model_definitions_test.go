@@ -2,11 +2,12 @@ package registry
 
 import "testing"
 
-func TestCodexFreeModelsExcludeGPT55(t *testing.T) {
+func TestCodexFreeModelsIncludeGPT55(t *testing.T) {
 	model := findModelInfo(GetCodexFreeModels(), "gpt-5.5")
-	if model != nil {
-		t.Fatal("expected codex free tier to NOT include gpt-5.5")
+	if model == nil {
+		t.Fatal("expected codex free tier to include gpt-5.5")
 	}
+	assertGPT55ModelInfo(t, "free", model)
 }
 
 func TestCodexStaticModelsIncludeGPT55(t *testing.T) {
@@ -23,6 +24,13 @@ func TestCodexStaticModelsIncludeGPT55(t *testing.T) {
 				t.Fatalf("expected codex %s tier to include gpt-5.5", tier)
 			}
 			assertGPT55ModelInfo(t, tier, model)
+
+			if mod := findModelInfo(models, "omni-moderation-latest"); mod == nil {
+				t.Fatalf("expected codex %s tier to include omni-moderation-latest", tier)
+			}
+			if mod := findModelInfo(models, "text-moderation-latest"); mod == nil {
+				t.Fatalf("expected codex %s tier to include text-moderation-latest", tier)
+			}
 		})
 	}
 
